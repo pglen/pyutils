@@ -30,6 +30,15 @@ The test case file contains the test instructions, one line per test. The format
     #   --------------  -----------     -------------   ------------
     #    for the user   what to test    what to expect  True if Find
 
+### The output of test cases:
+
+    Echo Command     	 OK
+    Test ls          	 OK
+    DF command       	 OK
+    DF mregex        	 OK
+
+## Summary:
+
 | File          |          Description              |   Notes   |
 | ------------- | --------------------------------  |  -------  |
 |bulkren.py     |  Rename files in balk             |           |
