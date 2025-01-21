@@ -1,0 +1,16 @@
+# String quadruplet per test.
+#
+# Format:
+#
+#   Context_string  Send_string     Expect_string   Find/Compare
+#   --------------  -----------     -------------   ------------
+#    for the user   what to test    what to expect  True if Find
+#
+
+[
+    [ "Test ls", "ls", "Make", True],
+    [ "DF command", "df", "blocks", True ],
+    [ "Test ls error", "ls", "Make", False],
+]
+
+# EOF

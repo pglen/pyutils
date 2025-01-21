@@ -1,0 +1,18 @@
+# String quadruplet per test.
+#
+# Format:
+#
+#   Context_string  Send_string     Expect_string   Find/Compare
+#   --------------  -----------     -------------   ------------
+#    for the user   what to test    what to expect  True if Find
+#
+
+[
+    [ "Echo Command", "", "", True],                # NOOP
+    [ "Test ls", "ls", "Make", True],               # Do we have a Make file
+    [ "DF command", "df", "blocks", "regex" ],      # Search regex
+    [ "DF mregex", "df", ".*blo",  "mregex" ],      # Match regex
+    [ "Exact", "/bin/ls -d .", b".\n", False ],     # Exact match
+]
+
+# EOF

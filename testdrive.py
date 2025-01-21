@@ -3,21 +3,54 @@
 import  os, sys, getopt, signal, select, socket, time, struct
 import  random, stat, os.path, datetime, threading, subprocess
 import  struct, io, traceback, hashlib, traceback, argparse
-import codecs
+import  codecs, re
 
 base = os.path.dirname(os.path.realpath(__file__))
 
+__doc__ = \
 '''
+The testcase file is python code, defining an array of tests.
+Python comments are OK. Syntax errors are reported.
+File Format:
+[
+  [ ContextStr, SendStr, ExpectStr, FindStr ], # optional comment
+]
+Where the items are:
+   Context_String,     Send_String,   Expect_String,   Find/Compare
+   -----------------   ------------   --------------   ------------
+   info for the user   what to send   what to expect   True if Find
+Example test case file:
+[
+    [ "Echo Command", "", "", True],         # NOOP
+    [ "Test ls", "ls", "Make", True],        # Do we have a Make file
+    [ "DF command", "df", "blocks", True ],  # Any 'blocks' string in the
+    [ "Exact", "ls -d /.", ".", False ], # Any 'blocks' string in the
+]
+FindStr field accepts:
+        True,       False,      "regex"       "mregex"
+        ----        ---------   ----------    -----------
+        Find str    Match str   Find regex    Match regex'''
 
- String quaruplet per test.  Input format is array of data.
+Version = "1.1.0"
 
-    #   Context_string  Send_string     Expect_string   Find/Compare
-    #   --------------  -----------     -------------   ------------
-    #    for the user   what to test    what to expect  True if Find
+# ------------------------------------------------------------------------
+# Print( an exception as the system would print it)
 
-'''
-
-Version = "1.0.0"
+def print_exception(xstr):
+    cumm = xstr + " "
+    a,b,c = sys.exc_info()
+    if a != None:
+        cumm += str(a) + " " + str(b) + "\n"
+        try:
+            #cumm += str(traceback.format_tb(c, 10))
+            ttt = traceback.extract_tb(c)
+            for aa in ttt:
+                cumm += "File: " + os.path.basename(aa[0]) + \
+                        " Line: " + str(aa[1]) + "\n" +  \
+                    "   Context: " + aa[2] + " -> " + aa[3] + "\n"
+        except:
+            print("Could not print trace stack. ", sys.exc_info())
+    print( cumm)
 
 def strdiff(expectx, actualx):
 
@@ -38,13 +71,29 @@ def xdiff(actualx, expectx, findflag):
         Sensitive to find flag.
     '''
 
-    if findflag:
+    if type(findflag) == type(""):
+        if "mregex" in findflag :
+            #print("Match regex", str(expectx), str(actualx))
+            rex = re.compile(str(expectx))
+            if rex.match(str(actualx)):
+                return "\033[32;1mOK\033[0m"
+            else:
+                return"\033[31;1mERR\033[0m"
+        elif "regex"  in findflag:
+            #print("Find regex", str(expectx), str(actualx))
+            rex = re.compile(str(expectx))
+            if rex.search(str(actualx)):
+                return "\033[32;1mOK\033[0m"
+            else:
+                return"\033[31;1mERR\033[0m"
+        else:
+            print("Warn: Invalid find flag string", findflag)
+    elif findflag:
         #print("Find", str(expectx), str(actualx))
         if str(expectx) in str(actualx):
             return "\033[32;1mOK\033[0m"
         else:
             return"\033[31;1mERR\033[0m"
-
     else:
         if expectx == actualx:
             return "\033[32;1mOK\033[0m"
@@ -57,7 +106,7 @@ def obtain_response(cmd):
 
     comm = [0,]
     exec = cmd.split()
-    if args.debug > 1:
+    if args.debuglev > 0:
         print("exec:", exec)
 
     if exec:
@@ -70,25 +119,29 @@ def obtain_response(cmd):
                 sys.stdout.flush()
         except:
             print("Cannot communicate with:", exec, file=sys.stderr)
-            print(sys.exc_info())
+            #print(sys.exc_info())
+            print_exception("exec")
 
     return comm[0]
+
+def fill(strx, wantlen):
+    return  strx + " " * (wantlen - len(strx))
 
 def send_expect(context, sendx, expectx, findflag):
 
     ''' Evaluate one SEND -- EXPECT sequence '''
 
     ret = obtain_response(sendx)
-    if args.debug > 2:
+    if args.debuglev > 1:
         print("\033[32;1mGot: ", ret, "\033[0m")
 
     err = xdiff(ret, expectx, findflag)
 
     # If no context, we do not want any printing
     if context:
-        print(context, "\t", err)
+        print(fill(context, args.fill), "\t", err)
 
-    if args.verbose:
+    if args.verbose > 0:
         # On error tell us the expected result
         if ret != expectx:
             print("\033[34;1mGot:\033[0m\n", ret)
@@ -121,7 +174,8 @@ def mainloop():
             try:
                 test_case_code = eval(testx)
             except:
-                print("Error in", fff, sys.exc_info(), file=sys.stderr)
+                #print("Error in", fff, sys.exc_info(), file=sys.stderr)
+                print_exception("Eval code error in '%s'\n" % fff)
                 args.errcnt += 1
                 continue
             for aa in test_case_code:
@@ -130,25 +184,33 @@ def mainloop():
                 if "ERR" in err:
                     args.errcnt += 1
 
+pdesc = 'Test send/expect by executing sub commands from test case scripts.'
+pform = "For info on TestCase File Format use -A option.\n "
+
 def mainfunct():
 
     global args
 
-    parser = argparse.ArgumentParser(\
-            description='Test send/expect by executing sub commands.')
+    parser = argparse.ArgumentParser( description=pdesc, epilog=pform)
 
     parser.add_argument("-V", '--version', dest='version',
                         default=0,  action='store_true',
                         help='Show version number')
+    parser.add_argument("-o", '--outp', dest='outp',
+                        default=0,  action='store_true',
+                        help='Show communication with program')
+    parser.add_argument("-A", '--info', dest='info',
+                        default=0,  action='store_true',
+                        help='Show testcase file format info')
     parser.add_argument("-v", '--verbose', dest='verbose',
                         default=0,  action='count',
                         help='increase verbocity (Default: none)')
-    parser.add_argument("-d", '--debug', dest='debug',
-                        default=0,  type=int, action='store',
-                        help='Debug level. Default: off')
-    parser.add_argument("-o", '--output', dest='outp',
-                        default=0,  action='store_true',
-                        help='Show communcation to program. Default: off')
+    parser.add_argument("-d", '--debug', dest='debuglev',
+                        default=0,  action='store', type=int,
+                        help='Debug value (1-9). Show working info. Default: 0')
+    parser.add_argument("-l", '--fill', dest='fill', type=int,
+                        default=16,  action='store',
+                        help='Fill info string to lenght. Default: 16')
     parser.add_argument("test_cases", nargs= "*",
                         help = "Test case file names to execute")
 
@@ -157,6 +219,10 @@ def mainfunct():
 
     if args.version:
         print("Version: %s" % Version)
+        sys.exit(0)
+
+    if args.info:
+        print(__doc__)
         sys.exit(0)
 
     if not args.test_cases:

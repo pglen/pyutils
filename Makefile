@@ -9,4 +9,9 @@ copy:
 docs:
 	echo Make docs
 
+git:
+	git add .
+	git commit -m AutoCommit
+	git push
+
 # EOF

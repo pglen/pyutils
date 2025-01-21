@@ -1,19 +1,36 @@
 # misc pyutils
 
- These utils are developed out od suffering ... no more. Need to rename
+ These utils are developed out of suffering ... no more.
+
+## Need to rename like this:
+
  figure001.txt --- figure100.txt image001.jpg -- image100.txt just do:
 
      ./bulkren.py -f figure*.txt  -o image
 
- need to change "import sockets" to "import mysockets" in every python file
- in the current dir just do:
+## Need to change "import sockets" to "import mysockets":
+
+in every python file in the current dir just do:
 
     ./chall.py "import sockets" "import mysockets" *.py
 
    Not sure what to expect? Add the -t option for "test", so the program can
  show you what it would do.
 
-| File                    Description                   Notes   |
+## A nifty utility to test things.
+
+ The test case file drives an send expect engine. The expect is then evaluated and
+the result is printed in a green colored 'OK' or a red colored 'ERR'.
+
+    ./testdrive.py testcase.txt
+
+The test case file contains the test instructions, one line per test. The format:
+
+    #   Context_string  Send_string     Expect_string   Find/Compare
+    #   --------------  -----------     -------------   ------------
+    #    for the user   what to test    what to expect  True if Find
+
+| File          |          Description              |   Notes   |
 | ------------- | --------------------------------  |  -------  |
 |bulkren.py     |  Rename files in balk             |           |
 |chall.py       |  Change string in maching files   |           |

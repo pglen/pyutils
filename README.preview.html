@@ -1,0 +1,48 @@
+<h1>misc pyutils</h1>
+
+<p>These utils are developed out of suffering ... no more.</p>
+
+<p>## Need to rename like this:</p>
+
+<p>figure001.txt --- figure100.txt image001.jpg -- image100.txt just do:</p>
+
+<pre><code> ./bulkren.py -f figure*.txt  -o image
+</code></pre>
+
+<p>## need to change "import sockets" to "import mysockets":</p>
+
+<p>in every python file in the current dir just do:</p>
+
+<pre><code>./chall.py "import sockets" "import mysockets" *.py
+</code></pre>
+
+<p>Not sure what to expect? Add the -t option for "test", so the program can
+ show you what it would do.</p>
+
+<h2>A nifty utility to test things.</h2>
+
+<p>The test case file drives an send expect engine. The expect is then evaluated and
+the result is printed in a green colored 'OK' or a red colored 'ERR'.</p>
+
+<pre><code>./testdrive.py testcase.txt
+</code></pre>
+
+<p>The test case file contains the test instructions, one line per test. The format:</p>
+
+<pre><code>#   Context_string  Send_string     Expect_string   Find/Compare
+#   --------------  -----------     -------------   ------------
+#    for the user   what to test    what to expect  True if Find
+</code></pre>
+
+<p>| File          |          Description              |   Notes   |
+| ------------- | --------------------------------  |  -------  |
+|bulkren.py     |  Rename files in balk             |           |
+|chall.py       |  Change string in maching files   |           |
+|isnewer.py     |  Is file newer than reerence      |           |
+|iterproj.py    |  Iterate current dir and subdirs  |           |
+|pgdel.py       |  Delete by moving to temp dir     |           |
+|pycomm.py      |  Extract comments                 |           |
+|testdrive.py   |  Test executable by send / expect |           |
+|README.md      |  This file                        |           |</p>
+
+<p>// EOF</p>
